@@ -1,12 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "CoxOnlineSubsystem.h"
 
 void UCoxOnlineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	InitClient();
+	InitClient("47.100.47.82");
 }
 
 void UCoxOnlineSubsystem::Deinitialize()
@@ -38,7 +37,7 @@ void UCoxOnlineSubsystem::AuthenticateEmail(const FString& email, const FString&
 			}, 
 			[this](const NError& error)
 			{
-				this->OnAuthenticateErrorCallbackEvent.Broadcast(FString(error.message.c_str()));
+				this->OnAuthenticateErrorCallbackEvent.Broadcast(FString(UTF8_TO_TCHAR(error.message.c_str())));
 			});
 	}
 }
@@ -75,7 +74,7 @@ void UCoxOnlineSubsystem::JoinChat(const FString& channel, EChatChannelType chat
 			},
 			[this](NRtError error)
 			{
-				this->OnJoinChatErrorCallbackEvent.Broadcast(FString(error.message.c_str()));
+				this->OnJoinChatErrorCallbackEvent.Broadcast(FString(UTF8_TO_TCHAR(error.message.c_str())));
 			}
 		);
 	}
@@ -89,11 +88,13 @@ void UCoxOnlineSubsystem::SendChatMessage(const FString& channel, const FString&
 		TCHAR_TO_UTF8(*message),
 		[this](const NChannelMessageAck& ack)
 		{
-			//UE_LOG(LogClass, Warning, TEXT("SendChatMessage: channelId = %s"), *FString(ack.channelId.c_str()));
+			if (this->RtClientListener) {
+				this->RtClientListener->OnSendChatMessageSuccess(ack);
+			}
 		},
 		[this](NRtError error)
 		{
-			this->OnSendChatMessageErrorCallbackEvent.Broadcast(FString(error.message.c_str()));
+			this->OnSendChatMessageErrorCallbackEvent.Broadcast(FString(UTF8_TO_TCHAR(error.message.c_str())));
 		}
 	);
 }
@@ -125,3 +126,4 @@ void UCoxOnlineSubsystem::InitRtClientListener()
 			this->OnConnectCallbackEvent.Broadcast();
 		});
 }
+ 

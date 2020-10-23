@@ -8,10 +8,24 @@ void CoxRtClientListener::SetJoinChatSuccessCallback(JoinChatSuccessCallback cal
 	JoinChatSuccess = callback;
 }
 
+void CoxRtClientListener::SetSendChatMessageSuccessCallback(SendChatMessageSuccessCallback callback)
+{
+	SendChatMessageSuccess = callback;
+}
+
 void CoxRtClientListener::OnJoinChatSuccess(const NChannelPtr& channel)
 {
-	if (JoinChatSuccess) {
+	if (JoinChatSuccess)
+	{
 		JoinChatSuccess(channel);
 	}
 	
+}
+
+void CoxRtClientListener::OnSendChatMessageSuccess(const NChannelMessageAck& ack)
+{
+	if (SendChatMessageSuccess)
+	{
+		SendChatMessageSuccess(ack);
+	}
 }

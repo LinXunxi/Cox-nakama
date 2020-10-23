@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "CoxOnlineSubsystem.h"
+#include "CoxUtilitiesSubsystem.h"
 #include "CoxLoginUserWidget.generated.h"
 
 /**
@@ -31,6 +32,8 @@ public:
 
 	void OnChannelMessageCallbackEvent(const NChannelMessage& message);
 	void OnJoinChatSuccessCallbackEvent(const NChannelPtr& channel);
+	void OnSendChatMessageSuccessCallbackEvent(const NChannelMessageAck& ack);
+	void OnChannelPresenceCallbackEvent(const NChannelPresenceEvent& presence);
 public:
 	/*UMG Start*/
 	UPROPERTY(Meta = (BindWidget))
@@ -62,14 +65,23 @@ public:
 		class UEditableTextBox* EditableTextBox_TEXT;
 	UPROPERTY(Meta = (BindWidget))
 		class UScrollBox* ScrollBox_Chat;
+
+	UPROPERTY(Meta = (BindWidget))
+		class UScrollBox* ScrollBox_Presences;
 	/*UMG End*/
 
 	UPROPERTY()
 		UCoxOnlineSubsystem* CoxOnlineSubsystem;
+	UPROPERTY()
+		UCoxUtilitiesSubsystem* CoxUtilitiesSubsystem;
 
 	UPROPERTY(EditDefaultsOnly, Category = NAKAMA)
-	TSubclassOf<class UCoxTextUserWidget> CoxTextUserWidgetClass;
+		TSubclassOf<class UCoxTextUserWidget> CoxTextUserWidgetClass;
+	UPROPERTY(EditDefaultsOnly, Category = NAKAMA)
+		TSubclassOf<class UCoxAccountUserWidget> CoxAccountUserWidgetClass;
 private:
+	TMap<FString, class UCoxAccountUserWidget*> UsersMap;
 	FString ChannelId;
 	CoxRtClientListener* RtClientListener;
+	void AddUser(const NUserPresence& presence);
 };
