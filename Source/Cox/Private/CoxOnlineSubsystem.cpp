@@ -30,7 +30,7 @@ void UCoxOnlineSubsystem::AuthenticateEmail(const FString& email, const FString&
 {
 	if (ClientPtr)
 	{
-		ClientPtr->authenticateEmail(TCHAR_TO_ANSI(*email), TCHAR_TO_ANSI(*password), TCHAR_TO_ANSI(*account), bIsCreate, {},
+		ClientPtr->authenticateEmail(TCHAR_TO_UTF8(*email), TCHAR_TO_UTF8(*password), TCHAR_TO_UTF8(*account), bIsCreate, {},
 			[this](NSessionPtr session)
 			{
 				this->SessionPtr = session;
@@ -43,11 +43,11 @@ void UCoxOnlineSubsystem::AuthenticateEmail(const FString& email, const FString&
 	}
 }
 
-void UCoxOnlineSubsystem::InitClient(const FString& host /*= "47.100.47.82"*/, int32 port /*= -1*/, const FString& key /*= "defaultkey"*/)
+void UCoxOnlineSubsystem::InitClient(const FString& host /*= "127.0.0.1"*/, int32 port /*= -1*/, const FString& key /*= "defaultkey"*/)
 {
 	NClientParameters parameters;
-	parameters.serverKey = TCHAR_TO_ANSI(*key);
-	parameters.host = TCHAR_TO_ANSI(*host);
+	parameters.serverKey = TCHAR_TO_UTF8(*key);
+	parameters.host = TCHAR_TO_UTF8(*host);
 	parameters.port = port;
 	if (!ClientPtr)
 	{
@@ -62,7 +62,7 @@ void UCoxOnlineSubsystem::JoinChat(const FString& channel, EChatChannelType chat
 	if (RtClientPtr)
 	{
 		RtClientPtr->joinChat(
-			TCHAR_TO_ANSI(*channel),
+			TCHAR_TO_UTF8(*channel),
 			(NChannelType)chatChannelType,
 			bIsPersistence,
 			bIsHidden,
@@ -85,8 +85,8 @@ void UCoxOnlineSubsystem::JoinChat(const FString& channel, EChatChannelType chat
 void UCoxOnlineSubsystem::SendChatMessage(const FString& channel, const FString& message)
 {
 	RtClientPtr->writeChatMessage(
-		TCHAR_TO_ANSI(*channel),
-		TCHAR_TO_ANSI(*message),
+		TCHAR_TO_UTF8(*channel),
+		TCHAR_TO_UTF8(*message),
 		[this](const NChannelMessageAck& ack)
 		{
 			//UE_LOG(LogClass, Warning, TEXT("SendChatMessage: channelId = %s"), *FString(ack.channelId.c_str()));

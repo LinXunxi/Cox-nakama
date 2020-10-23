@@ -142,7 +142,9 @@ void UCoxLoginUserWidget::OnChannelMessageCallbackEvent(const NChannelMessage& m
 
 			FString message_text;
 
-			FString JsonValue = FString(message.content.c_str());
+			
+
+			FString JsonValue = FString(UTF8_TO_TCHAR(message.content.c_str()));
 
 			TSharedRef< TJsonReader<TCHAR> > JsonReader = TJsonReaderFactory<TCHAR>::Create(JsonValue);
 			TSharedPtr<FJsonObject> Root;
