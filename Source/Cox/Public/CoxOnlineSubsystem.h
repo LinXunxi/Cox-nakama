@@ -9,9 +9,14 @@
 #include "CoxOnlineSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnConnectCallbackEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRemoveMatchmakerCallbackEvent);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAuthenticateErrorCallbackEvent, const FString&, message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnJoinChatErrorCallbackEvent, const FString&, message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSendChatMessageErrorCallbackEvent, const FString&, message);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMatchmakerTicketCallbackEvent, const FString&, ticket);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRemoveMatchmakerErrorCallbackEvent, const FString&, message);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnJoinMatchmakerErrorCallbackEvent, const FString&, message);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnJoinMatchByTokenErrorCallbackEvent, const FString&, message);
 
 UCLASS()
 class COX_API UCoxOnlineSubsystem : public UGameInstanceSubsystem, public FTickableGameObject
@@ -30,6 +35,9 @@ public:
 	void InitClient(const FString& host = "127.0.0.1", int32 port = -1, const FString& key = "defaultkey");
 	void JoinChat(const FString& channel, EChatChannelType chatChannelType, bool bIsPersistence = true, bool bIsHidden = false);
 	void SendChatMessage(const FString& channel, const FString& message);
+	void JoinMatchmaker(int32 minCount, int32 maxCount, const FString& query, const NStringMap& stringProperties, const NStringDoubleMap& numericProperties);
+	void RemoveMatchmaker(const FString& ticket);
+	void JoinMatchByToken(const FString& token);
 
 	CoxRtClientListener* GetCoxRtClientListener();
 public:
@@ -37,6 +45,11 @@ public:
 	FOnAuthenticateErrorCallbackEvent OnAuthenticateErrorCallbackEvent;
 	FOnJoinChatErrorCallbackEvent OnJoinChatErrorCallbackEvent;
 	FOnSendChatMessageErrorCallbackEvent OnSendChatMessageErrorCallbackEvent;
+	FOnMatchmakerTicketCallbackEvent OnMatchmakerTicketCallbackEvent;
+	FOnRemoveMatchmakerCallbackEvent OnRemoveMatchmakerCallbackEvent;
+	FOnRemoveMatchmakerErrorCallbackEvent OnRemoveMatchmakerErrorCallbackEvent;
+	FOnJoinMatchmakerErrorCallbackEvent OnJoinMatchmakerErrorCallbackEvent;
+	FOnJoinMatchByTokenErrorCallbackEvent OnJoinMatchByTokenErrorCallbackEvent;
 private:
 	void InitRtClient(int32 port = -1, bool bIsInvisible = false);
 	void InitRtClientListener();

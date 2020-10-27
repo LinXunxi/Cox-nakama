@@ -17,8 +17,13 @@ class COX_API UCoxLoginUserWidget : public UUserWidget
 	GENERATED_BODY()
 public:
 	virtual void NativeConstruct() override;
+
+
+
 	UFUNCTION()
 		void OnButtonLoginPressedEvent();
+	UFUNCTION()
+		void OnButtonMatcherPressedEvent();
 	UFUNCTION()
 		void OnButtonJoinChatPressedEvent();
 	UFUNCTION()
@@ -29,11 +34,18 @@ public:
 		void OnAuthenticateErrorCallbackEvent(const FString& message);
 	UFUNCTION()
 		void OnJoinChatErrorCallbackEvent(const FString& message);
+	UFUNCTION()
+		void OnMatchmakerTicketCallbackEvent(const FString& ticket);
+	UFUNCTION()
+		void OnRemoveMatchmakerCallbackEvent();
+
+
 
 	void OnChannelMessageCallbackEvent(const NChannelMessage& message);
 	void OnJoinChatSuccessCallbackEvent(const NChannelPtr& channel);
 	void OnSendChatMessageSuccessCallbackEvent(const NChannelMessageAck& ack);
 	void OnChannelPresenceCallbackEvent(const NChannelPresenceEvent& presence);
+	void OnMatchmakerMatchedCallbackEvent(const NMatchmakerMatchedPtr& matched);
 public:
 	/*UMG Start*/
 	UPROPERTY(Meta = (BindWidget))
@@ -68,6 +80,14 @@ public:
 
 	UPROPERTY(Meta = (BindWidget))
 		class UScrollBox* ScrollBox_Presences;
+
+	UPROPERTY(Meta = (BindWidget))
+		class UButton* Button_Matcher;
+	UPROPERTY(Meta = (BindWidget))
+		class UHorizontalBox* HorizontalBox_Top;
+	UPROPERTY(Meta = (BindWidget))
+		class UTextBlock* TextBlock_Matcher;
+
 	/*UMG End*/
 
 	UPROPERTY()
@@ -82,6 +102,8 @@ public:
 private:
 	TMap<FString, class UCoxAccountUserWidget*> UsersMap;
 	FString ChannelId;
+	bool bIsMatching;
+	FString Ticket;
 	CoxRtClientListener* RtClientListener;
 	void AddUser(const NUserPresence& presence);
 };

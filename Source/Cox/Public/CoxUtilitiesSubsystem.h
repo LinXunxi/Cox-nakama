@@ -25,6 +25,7 @@ public:
 public:
 	bool Base64EncodeData(const TArray<uint8>& data, FString& dest);
 	bool Base64DecodeData(const FString& source, TArray<uint8>& dest);
+	FString MD5Encode(const FString& Name);
 	UTexture2D* LoadTexture2D(const TArray<uint8>& data);
 	bool LoadFileToData(TArray<uint8>& data, const FString& dialog, const FString& path, const FString& types);
 };

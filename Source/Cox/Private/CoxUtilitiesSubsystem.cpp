@@ -39,6 +39,11 @@ bool UCoxUtilitiesSubsystem::Base64DecodeData(const FString& source, TArray<uint
 	return FBase64::Decode(source, dest);
 }
 
+FString UCoxUtilitiesSubsystem::MD5Encode(const FString& Name)
+{
+	return FMD5::HashAnsiString(*Name);
+}
+
 UTexture2D* UCoxUtilitiesSubsystem::LoadTexture2D(const TArray<uint8>& data)
 {
 	UTexture2D* LoadedT2D = nullptr;

@@ -13,6 +13,11 @@ void CoxRtClientListener::SetSendChatMessageSuccessCallback(SendChatMessageSucce
 	SendChatMessageSuccess = callback;
 }
 
+void CoxRtClientListener::SetJoinMatchByTokenSuccessCallback(JoinMatchByTokenSuccessCallback callback)
+{
+	JoinMatchByTokenSuccess = callback;
+}
+
 void CoxRtClientListener::OnJoinChatSuccess(const NChannelPtr& channel)
 {
 	if (JoinChatSuccess)
@@ -27,5 +32,13 @@ void CoxRtClientListener::OnSendChatMessageSuccess(const NChannelMessageAck& ack
 	if (SendChatMessageSuccess)
 	{
 		SendChatMessageSuccess(ack);
+	}
+}
+
+void CoxRtClientListener::OnJoinMatchByTokenSuccess(const NMatch& match)
+{
+	if (JoinMatchByTokenSuccess)
+	{
+		JoinMatchByTokenSuccess(match);
 	}
 }

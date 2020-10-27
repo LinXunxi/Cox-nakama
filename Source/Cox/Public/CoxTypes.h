@@ -10,3 +10,4 @@ enum class EChatChannelType : uint8
 	ChannelType_DIRECT_MESSAGE = 1,   ///< A private chat between two users.
 	ChannelType_GROUP = 2			  ///< A chat within a group on the server.
 };
+

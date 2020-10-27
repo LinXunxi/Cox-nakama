@@ -99,6 +99,68 @@ void UCoxOnlineSubsystem::SendChatMessage(const FString& channel, const FString&
 	);
 }
 
+void UCoxOnlineSubsystem::JoinMatchmaker(int32 minCount, int32 maxCount, const FString& query,const NStringMap& stringProperties, const NStringDoubleMap& numericProperties)
+{
+	if (RtClientPtr)
+	{
+		
+		RtClientPtr->addMatchmaker(
+			minCount, 
+			maxCount, 
+			TCHAR_TO_UTF8(*query), 
+			stringProperties, 
+			numericProperties, 
+			[this](const NMatchmakerTicket& ticket)
+			{
+				this->OnMatchmakerTicketCallbackEvent.Broadcast(FString(UTF8_TO_TCHAR(ticket.ticket.c_str())));
+			},
+			[this](NRtError error)
+			{
+				this->OnJoinMatchmakerErrorCallbackEvent.Broadcast(FString(UTF8_TO_TCHAR(error.message.c_str())));
+			}
+		);
+	}
+}
+
+void UCoxOnlineSubsystem::RemoveMatchmaker(const FString& ticket)
+{
+	if (RtClientPtr)
+	{
+		RtClientPtr->removeMatchmaker(
+			TCHAR_TO_UTF8(*ticket),
+			[this]()
+			{
+				this->OnRemoveMatchmakerCallbackEvent.Broadcast();
+			},
+			[this](NRtError error)
+			{
+				this->OnRemoveMatchmakerErrorCallbackEvent.Broadcast(FString(UTF8_TO_TCHAR(error.message.c_str())));
+			}
+		);
+	
+	}
+}
+
+void UCoxOnlineSubsystem::JoinMatchByToken(const FString& token)
+{
+	if (RtClientPtr)
+	{
+		RtClientPtr->joinMatchByToken(
+			TCHAR_TO_UTF8(*token),
+			[this](const NMatch& match)
+			{
+				if (this->RtClientListener) {
+					this->RtClientListener->OnJoinMatchByTokenSuccess(match);
+				}
+			},
+			[this](NRtError error)
+			{
+				this->OnJoinMatchByTokenErrorCallbackEvent.Broadcast(FString(UTF8_TO_TCHAR(error.message.c_str())));
+			}
+		);
+	}
+}
+
 CoxRtClientListener* UCoxOnlineSubsystem::GetCoxRtClientListener()
 {
 	return RtClientListener;

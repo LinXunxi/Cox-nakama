@@ -17,6 +17,7 @@ void UCoxLoginUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	bIsMatching = false;
 	UGameInstance* GameInstance = UWidget::GetGameInstance();
 	CoxOnlineSubsystem = GameInstance->GetSubsystem<UCoxOnlineSubsystem>();
 	CoxUtilitiesSubsystem = GameInstance->GetSubsystem<UCoxUtilitiesSubsystem>();
@@ -26,6 +27,8 @@ void UCoxLoginUserWidget::NativeConstruct()
 		CoxOnlineSubsystem->OnConnectCallbackEvent.AddDynamic(this, &UCoxLoginUserWidget::OnConnectCallbackEvent);
 		CoxOnlineSubsystem->OnAuthenticateErrorCallbackEvent.AddDynamic(this, &UCoxLoginUserWidget::OnAuthenticateErrorCallbackEvent);
 		CoxOnlineSubsystem->OnJoinChatErrorCallbackEvent.AddDynamic(this, &UCoxLoginUserWidget::OnJoinChatErrorCallbackEvent);
+		CoxOnlineSubsystem->OnMatchmakerTicketCallbackEvent.AddDynamic(this, &UCoxLoginUserWidget::OnMatchmakerTicketCallbackEvent);
+		CoxOnlineSubsystem->OnRemoveMatchmakerCallbackEvent.AddDynamic(this, &UCoxLoginUserWidget::OnRemoveMatchmakerCallbackEvent);
 	}
 
 	if (Button_Login)
@@ -43,6 +46,10 @@ void UCoxLoginUserWidget::NativeConstruct()
 		Button_Send->OnPressed.AddDynamic(this, &UCoxLoginUserWidget::OnButtonSendChatPressedEvent);
 	}
 
+	if (Button_Matcher)
+	{
+		Button_Matcher->OnPressed.AddDynamic(this, &UCoxLoginUserWidget::OnButtonMatcherPressedEvent);
+	}
 }
 
 void UCoxLoginUserWidget::OnButtonLoginPressedEvent()
@@ -53,6 +60,22 @@ void UCoxLoginUserWidget::OnButtonLoginPressedEvent()
 		FString password = EditableTextBox_Password->GetText().ToString();
 
 		CoxOnlineSubsystem->AuthenticateEmail(email, password, "", true);
+	}
+}
+
+void UCoxLoginUserWidget::OnButtonMatcherPressedEvent()
+{
+	if (Button_Matcher && CoxOnlineSubsystem && TextBlock_Matcher)
+	{
+		if (!bIsMatching)
+		{
+			CoxOnlineSubsystem->JoinMatchmaker(2, 2, "*", {}, {});
+			Button_Matcher->SetIsEnabled(false);
+		}
+		else {
+			CoxOnlineSubsystem->RemoveMatchmaker(Ticket);
+			Button_Matcher->SetIsEnabled(false);
+		}
 	}
 }
 
@@ -108,6 +131,10 @@ void UCoxLoginUserWidget::OnConnectCallbackEvent()
 				{
 					this->OnChannelPresenceCallbackEvent(presence);
 				});
+			RtClientListener->setMatchmakerMatchedCallback([this](const NMatchmakerMatchedPtr& matched)
+				{
+					this->OnMatchmakerMatchedCallbackEvent(matched);
+				});
 			
 		}
 	}
@@ -116,9 +143,9 @@ void UCoxLoginUserWidget::OnConnectCallbackEvent()
 	{
 		VerticalBox_LoginBox->RemoveFromParent();
 
-		if (HorizontalBox_JoinChat)
+		if (HorizontalBox_Top)
 		{
-			HorizontalBox_JoinChat->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+			HorizontalBox_Top->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		}
 	}
 }
@@ -139,6 +166,26 @@ void UCoxLoginUserWidget::OnJoinChatErrorCallbackEvent(const FString& message)
 	}
 }
 
+void UCoxLoginUserWidget::OnMatchmakerTicketCallbackEvent(const FString& ticket)
+{
+	if (Button_Matcher && TextBlock_Matcher)
+	{
+		bIsMatching = true;
+		TextBlock_Matcher->SetText(FText::FromString("Matching..."));
+		Button_Matcher->SetIsEnabled(true);
+		Ticket = ticket;
+	}
+}
+
+void UCoxLoginUserWidget::OnRemoveMatchmakerCallbackEvent()
+{
+	if (Button_Matcher && TextBlock_Matcher)
+	{
+		TextBlock_Matcher->SetText(FText::FromString("Matchmaker"));
+		Button_Matcher->SetIsEnabled(true);
+		bIsMatching = false;
+	}
+}
 
 void UCoxLoginUserWidget::OnChannelMessageCallbackEvent(const NChannelMessage& message)
 {
@@ -176,16 +223,12 @@ void UCoxLoginUserWidget::OnJoinChatSuccessCallbackEvent(const NChannelPtr& chan
 {
 	if (HorizontalBox_JoinChat && VerticalBox_Chat)
 	{
-		HorizontalBox_JoinChat->RemoveFromParent();
 		VerticalBox_Chat->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		ChannelId = FString(channel->id.c_str());
 
-		if (CoxAccountUserWidgetClass)
+		for (auto user : channel->presences)
 		{
-			for (auto user : channel->presences)
-			{
-				AddUser(user);
-			}
+			AddUser(user);
 		}
 	}
 }
@@ -202,36 +245,46 @@ void UCoxLoginUserWidget::OnChannelPresenceCallbackEvent(const NChannelPresenceE
 {
 	if (ScrollBox_Presences)
 	{
-		if (CoxAccountUserWidgetClass)
+		for (auto user : presence.leaves)
 		{
-			for (auto user : presence.leaves)
+			FString name = FString(UTF8_TO_TCHAR(user.username.c_str()));
+			if (UsersMap.Contains(name))
 			{
-				FString name = FString(UTF8_TO_TCHAR(user.username.c_str()));
-				if (UsersMap.Contains(name))
-				{
-					UsersMap[name]->RemoveFromParent();
-					UsersMap.Remove(name);
-				}
-			}
-			for (auto user : presence.joins)
-			{
-				AddUser(user);
+				UsersMap[name]->RemoveFromParent();
+				UsersMap.Remove(name);
 			}
 		}
+		for (auto user : presence.joins)
+		{
+			AddUser(user);
+		}
+	}
+}
+
+void UCoxLoginUserWidget::OnMatchmakerMatchedCallbackEvent(const NMatchmakerMatchedPtr& matched)
+{
+	if (CoxUtilitiesSubsystem && CoxOnlineSubsystem && HorizontalBox_Top)
+	{
+		FString MatchID = FString(UTF8_TO_TCHAR(matched->matchId.c_str()));
+		CoxOnlineSubsystem->JoinChat(CoxUtilitiesSubsystem->MD5Encode(MatchID), EChatChannelType::ChannelType_ROOM);
+		HorizontalBox_Top->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
 void UCoxLoginUserWidget::AddUser(const NUserPresence& presence)
 {	
-	FString name = FString(UTF8_TO_TCHAR(presence.username.c_str()));
-	UCoxAccountUserWidget* CoxAccountUserWidget = CreateWidget<UCoxAccountUserWidget>(this, CoxAccountUserWidgetClass);
-	CoxAccountUserWidget->TextBlock_Name->SetText(FText::FromString(name));
-	if (CoxAccountUserWidget)
+	if (CoxAccountUserWidgetClass)
 	{
-		UsersMap.Add(name, CoxAccountUserWidget);
-		if (ScrollBox_Presences)
+		FString name = FString(UTF8_TO_TCHAR(presence.username.c_str()));
+		UCoxAccountUserWidget* CoxAccountUserWidget = CreateWidget<UCoxAccountUserWidget>(this, CoxAccountUserWidgetClass);
+		if (CoxAccountUserWidget)
 		{
-			ScrollBox_Presences->AddChild(CoxAccountUserWidget);
+			CoxAccountUserWidget->TextBlock_Name->SetText(FText::FromString(name));
+			UsersMap.Add(name, CoxAccountUserWidget);
+			if (ScrollBox_Presences)
+			{
+				ScrollBox_Presences->AddChild(CoxAccountUserWidget);
+			}
 		}
 	}
 }
